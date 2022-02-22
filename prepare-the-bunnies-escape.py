@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Let us define two sets of vertices I and O, and a norm over their intersection:
 #   I is the set of vertices reachable from source,
 #   O is the set of vertices reachable from sink, and
