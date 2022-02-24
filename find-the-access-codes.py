@@ -1,3 +1,40 @@
-# Write a function solution(l) that takes a list of positive integers l and counts the number of "lucky triples" of (li, lj, lk) where the list indices meet the requirement i < j < k.  The length of l is between 2 and 2000 inclusive.  The elements of l are between 1 and 999999 inclusive.  The solution fits within a signed 32-bit integer. Some of the lists are purposely generated without any access codes to throw off spies, so if no triples are found, return 0. 
+from pprint import pprint
+def insert(trie, n):
+    divisors = [m for m in trie.viewkeys() - {"end"} if n % m == 0]
+    curr = trie.get("end", 0)
+    pprint("n = %d, curr = %d" % (n, curr))
+    if not divisors:
+        trie[n] = {"end": 1}
+        return curr
+    elif n in divisors:
+        trie[n]["end"] += 1
+        return curr
+    else:
+        return curr + sum(insert(trie[d], n) for d in divisors)
 
-# For example, [1, 2, 3, 4, 5, 6] has the triples: [1, 2, 4], [1, 2, 6], [1, 3, 6], making the solution 3 total.
+from math import factorial
+def kchoose2(k):
+    return 0 if k < 2 else factorial(k) / 2 * factorial(k - 2)
+
+def solution(ns):
+    trie = dict()
+    acc = 0
+    for n in ns:
+        tmp = insert(trie, n)
+        print("n = %d, insert = %d" % (n, tmp))
+        acc += kchoose2(tmp)
+    pprint(trie)
+    return acc
+
+# ns = [1,2,4] # 1
+# print(solution(ns))
+# ns = [1,1,2] # 1
+# print(solution(ns))
+ns = [1,2,2] # 1
+print(solution(ns))
+# ns = [1,1,1] # 1
+# print(solution(ns))
+# ns = [1,1] # 0
+# print(solution(ns))
+# ns = [1,2,4,8] # 4?
+# print(solution(ns))
