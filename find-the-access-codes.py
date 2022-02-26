@@ -1,46 +1,32 @@
+# Build the transitive closure of // over the input as a bitarray
+# then sum all the descendents one level deep for each vertex starting from 0
+# resulting matrix is not square exactly, or need not be, because you know in advance the ith vertex can only have len(G)-i edges going out of it
+# so, if you can bake offsets into the graph logic, it allows you to pack the representation even further
+# it's also unimportant to store the edge from a vertex to itself
+# you end up with something kind of in between an adjacency list and adjacency matrix
+# except no bitarrays cuz not allowed
+
 from pprint import pprint
-def insert(trie, n):
-    divisors = [d for d in trie.viewkeys() - {"end"} if n % d == 0]
-    if not divisors:
-        trie[n] = {"end": 1}
-    else:
-        for d in divisors:
-            insert(trie[d], n)
+from array import array
+from itertools import combinations
 
-from math import factorial
-def nchoosek(n, k):
-    if n < k:
-        return 0
-    elif n == k:
-        return 1
-    else:
-        return (factorial(n)) / (factorial(k) * (factorial(n - k)))
+def solution(s):
+    # need V-1 bitarrays with each 1 bit shorter than the last, starting at V-1?
+    numVertices = len(s)
+    G = list(array('H') for _ in xrange(numVertices))
+    for u, v in combinations(xrange(numVertices), 2):
+        if not s[v] % s[u]:
+            G[u].append(v)
 
-def search(trie, n, depth=0):
-    divisors = [d for d in trie.viewkeys() - {"end"} if n % d == 0]
-    if not divisors:
-        return nchoosek(depth, 2)
-    else:
-        return sum(search(trie[d], n, depth + 1) for d in divisors)
+    def luckies(G, v):
+        return sum(len(G[u]) for u in G[v])
 
-def solution(ns):
-    trie = dict()
-    acc = 0
-    for n in ns:
-        s = search(trie, n)
-        acc += s
-        insert(trie, n)
-    return acc
+    return sum(luckies(G, v) for v in xrange(numVertices))
 
-# ns = [1,2,4] # 1
-# print(solution(ns))
-# ns = [1,1,2] # 1
-# print(solution(ns))
-# ns = [9,3,9,9] # 2
-# print(solution(ns))
-# ns = [1,1,1] # 1
-# print(solution(ns))
-# ns = [1,1] # 0
-# print(solution(ns))
-# ns = [1,2,4,8] # 4?
-# print(solution(ns))
+# s = [1] * 2000
+# S = solution(s)
+# print(S)
+# python find-the-access-codes.py  0.36s user 0.02s system 94% cpu 0.403 total
+
+s = [1,1,2,1,2]
+print(solution(s))
