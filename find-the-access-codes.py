@@ -27,7 +27,7 @@
 
 def solution(s):
     I = range(len(s))
-    G = [[n for n in I[m + 1 :] if s[n] % s[m] == 0] for m in I]
+    G = [[m for m in I[n + 1 :] if s[m] % s[n] == 0] for n in I]
 
     def neighbors(n):
         return G[n]
