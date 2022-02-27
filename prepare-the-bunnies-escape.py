@@ -21,11 +21,11 @@ def solution(matrix):
     def wall(v):
         return G[v] == 1
 
+    def neighbors(x, y):
+        return {(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)}
+
     def shortestPaths(G, source, sink):
         Q, S = deque([(source, 0)]), {source: 0}
-
-        def neighbors(x, y):
-            return {(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)}
 
         while Q:
             v, d = Q.popleft()
