@@ -25,17 +25,17 @@
 
 # We find the final answer by integrating this calculation over all n ∈ I:
 
-def solution(I):
-    vertices = range(len(I))
-    G = [[v for v in vertices[u + 1 :] if I[v] % I[u] == 0] for u in vertices]
+def solution(s):
+    I = range(len(s))
+    G = [[v for v in I[u + 1 :] if s[v] % s[u] == 0] for u in I]
 
-    def neighbors(v):
-        return G[v]
+    def neighbors(n):
+        return G[n]
 
-    def luckies(v):
-        return sum(len(neighbors(u)) for u in neighbors(v))
+    def luckies(n):
+        return sum(len(neighbors(m)) for m in neighbors(n))
 
-    return sum(luckies(v) for v in vertices)
+    return sum(luckies(n) for n in I)
 
 # Note: we can achieve a ~30% speedup on the above code by manually inlining
 # the calls to luckies() and neighbors(), which CPython will not do. They can
