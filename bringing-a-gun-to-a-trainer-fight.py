@@ -72,6 +72,8 @@ def solution(dimensions, shooter, target, distance):
 
     shooter = bogey(*shooter, isHostile=False)
     target = bogey(*target, isHostile=True)
+    if target.metric > distance:
+        return 0
 
     def reflect(horizontal=1, vertical=1):
         def f(b):
