@@ -97,24 +97,27 @@ def solution(dimensions, shooter, target, distance):
     heapify(Q)
     seenHostile = {target.angle}
     seenFriendly = {shooter.angle}
-    pprint(target)
+    # pprint(target)
     while Q:
         curr = heappop(Q)
-        print("Reflections of %s, metric %d" % ((curr.x, curr.y),curr.metric))
+        # print("Reflections of %s, metric %d" % ((curr.x, curr.y),curr.metric))
         for img in reflections(curr):
             if img.metric <= distance and img.angle not in seenHostile | seenFriendly:
-                pprint(img)
+                # pprint(img)
                 heappush(Q, img)
                 (seenHostile if img.isHostile else seenFriendly).add(img.angle)
-    return seenHostile
+    return len(seenHostile)
 
 
-dimensions = (3, 2)
-me = (1, 1)
-shooterX, shooterY = me
-trainer = (2, 1)
-targetX, targetY = trainer
-distance = 4
+# dimensions = (3, 2)
+# me = (1, 1)
+# trainer = (2, 1)
+# distance = 4
+# S = solution(dimensions, me, trainer, distance) # 7
 
-S = solution(dimensions, me, trainer, distance)
+dimensions = (300, 275)
+me = (150, 150)
+trainer = (185, 100)
+distance = 500
+S = solution(dimensions, me, trainer, distance) # 9
 pprint(S)
