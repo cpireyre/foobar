@@ -34,7 +34,9 @@
 
 
 def gcd(a, b):
-    return a if b == 0 else gcd(b, a % b)
+    while b:
+        a, b = b, a % b
+    return a
 def sign(x):
     return 1 if x > 0 else -1
 
@@ -115,7 +117,7 @@ def solution(dimensions, shooter, target, distance):
 dimensions = (3, 2)
 me = (1, 1)
 trainer = (2, 1)
-distance = 500
+distance = 100
 S = solution(dimensions, me, trainer, distance) # 7
 pprint(S)
 
