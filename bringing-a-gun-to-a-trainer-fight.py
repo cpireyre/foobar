@@ -40,7 +40,18 @@ def gcd(a, b):
 def sign(x):
     return 1 if x > 0 else -1
 
-
+N, S, E, W = (0, -1), (0, 1), (1, 0), (-1, 0)
+NE, NW, SE, SW = (1, -1), (-1, -1), (1, 1), (-1, 1)
+reflections = {(0, 0): (N, S, E, W, NE, NW, SE, SW),
+        N:  (N, NE, NW),
+        S:  (S, SE, SW),
+        E:  (E, NE, SE),
+        W:  (W, NW, SW),
+        NE: (N, E, NE, NW, SE),
+        NW: (N, W, NE, NW, SW),
+        SE: (S, E, NE, SE, SW),
+        SW: (S, W, NW, SE, SW),
+        }
 
 from collections import namedtuple
 from heapq import heapify, heappop, heappush
@@ -66,11 +77,11 @@ def solution(dimensions, shooter, target, distance):
         return (xSign * x // divisor, ySign * y // divisor)
 
 
-    Bogey = namedtuple("Bogey", "metric isHostile angle x y xOffset yOffset")
+    Bogey = namedtuple("Bogey", "metric isHostile direction angle x y xOffset yOffset")
 
-    def bogey(x, y, isHostile):
+    def bogey(x, y, isHostile, direction=(0, 0)):
         return Bogey(
-            M(x, y), isHostile, norm(x, y), x, y, (x, width - x), (y, height - y) 
+            M(x, y), isHostile, direction, norm(x, y), x, y, (x, width - x), (y, height - y) 
         )
 
     shooter = bogey(*shooter, isHostile=False)
@@ -78,25 +89,17 @@ def solution(dimensions, shooter, target, distance):
     if target.metric > distance:
         return 0
 
-    def reflect(horizontal=1, vertical=1):
-        def f(b):
-            nX = b.x + horizontal * 2 * b.xOffset[max(0, horizontal)]
-            nY = b.y + vertical * 2 * b.yOffset[max(0, vertical)]
-            nXOffset = (b.xOffset[1], b.xOffset[0]) if horizontal else b.xOffset
-            nYOffset = (b.yOffset[1], b.yOffset[0]) if vertical else b.yOffset
-            return Bogey(
-                M(nX, nY), b.isHostile, norm(nX, nY), nX, nY, nXOffset, nYOffset 
+    def reflect(b, horizontal=1, vertical=1):
+        nX = b.x + horizontal * 2 * b.xOffset[max(0, horizontal)]
+        nY = b.y + vertical * 2 * b.yOffset[max(0, vertical)]
+        nXOffset = (b.xOffset[1], b.xOffset[0]) if horizontal else b.xOffset
+        nYOffset = (b.yOffset[1], b.yOffset[0]) if vertical else b.yOffset
+        return Bogey(
+            M(nX, nY), b.isHostile, (horizontal, vertical), norm(nX, nY), nX, nY, nXOffset, nYOffset 
             )
 
-        return f
-
-    N, S = reflect(0, -1), reflect(0, 1)
-    E, W = reflect(1, 0), reflect(-1, 0)
-    NE, NW = reflect(1, -1), reflect(-1, -1)
-    SE, SW = reflect(1, 1), reflect(-1, 1)
-
-    def reflections(b):
-        return (N(b), S(b), E(b), W(b), NE(b), NW(b), SE(b), SW(b))
+    def neighbors(bogey):
+        return (reflect(bogey, *r) for r in reflections[bogey.direction])
 
     Q = [target, shooter]
     heapify(Q)
@@ -106,7 +109,7 @@ def solution(dimensions, shooter, target, distance):
     while Q:
         curr = heappop(Q)
         # print("Reflections of %s, metric %d" % ((curr.x, curr.y),curr.metric))
-        for img in reflections(curr):
+        for img in neighbors(curr):
             if img.metric <= distance and img.angle not in seenHostile and img.angle not in seenFriendly:
                 # pprint(img)
                 heappush(Q, img)
@@ -114,23 +117,38 @@ def solution(dimensions, shooter, target, distance):
     return len(seenHostile)
 
 
+# dimensions = (3, 2)
+# me = (1, 1)
+# trainer = (2, 1)
+# distance = 4
+# S = solution(dimensions, me, trainer, distance) # 7
+# pprint(S)
+
+# dimensions = (3, 2)
+# me = (1, 1)
+# trainer = (2, 1)
+# distance = 100
+# S = solution(dimensions, me, trainer, distance) # 3995, 0.17s
+# pprint(S)
+
+# dimensions = (3, 2)
+# me = (1, 1)
+# trainer = (2, 1)
+# distance = 220
+# S = solution(dimensions, me, trainer, distance) # 19265, 0.61s
+# pprint(S)
+
 dimensions = (3, 2)
 me = (1, 1)
 trainer = (2, 1)
-distance = 100
-S = solution(dimensions, me, trainer, distance) # 7
+distance = 500
+S = solution(dimensions, me, trainer, distance) # 99465, 3.12s
+assert(S) == 99465
 pprint(S)
 
 # dimensions = (300, 275)
 # me = (150, 150)
 # trainer = (185, 100)
 # distance = 500
-# S = solution(dimensions, me, trainer, distance) # 9
-# pprint(S)
-
-# dimensions = (1250, 1250)
-# me = (150, 150)
-# trainer = (185, 100)
-# distance = 10000
 # S = solution(dimensions, me, trainer, distance) # 9
 # pprint(S)
