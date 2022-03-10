@@ -35,6 +35,8 @@
 
 def gcd(a, b):
     return a if b == 0 else gcd(b, a % b)
+def sign(x):
+    return 1 if x > 0 else -1
 
 
 
@@ -54,11 +56,10 @@ def solution(dimensions, shooter, target, distance):
 
     def norm(x, y):
         x, y = x - shooterx, y - shootery
-        xSign = -1 if x < 0 else 1
-        ySign = -1 if y < 0 else 1
-        x, y = abs(x), abs(y)
         if not x and not y:
             return (0, 0)
+        xSign, ySign = sign(x), sign(y)
+        x, y = abs(x), abs(y)
         divisor = gcd(x, y)
         return (xSign * x // divisor, ySign * y // divisor)
 
@@ -104,22 +105,30 @@ def solution(dimensions, shooter, target, distance):
         curr = heappop(Q)
         # print("Reflections of %s, metric %d" % ((curr.x, curr.y),curr.metric))
         for img in reflections(curr):
-            if img.metric <= distance and img.angle not in seenHostile | seenFriendly:
+            if img.metric <= distance and img.angle not in seenHostile and img.angle not in seenFriendly:
                 # pprint(img)
                 heappush(Q, img)
                 (seenHostile if img.isHostile else seenFriendly).add(img.angle)
     return len(seenHostile)
 
 
-# dimensions = (3, 2)
-# me = (1, 1)
-# trainer = (2, 1)
-# distance = 4
-# S = solution(dimensions, me, trainer, distance) # 7
-
-dimensions = (300, 275)
-me = (150, 150)
-trainer = (185, 100)
+dimensions = (3, 2)
+me = (1, 1)
+trainer = (2, 1)
 distance = 500
-S = solution(dimensions, me, trainer, distance) # 9
+S = solution(dimensions, me, trainer, distance) # 7
 pprint(S)
+
+# dimensions = (300, 275)
+# me = (150, 150)
+# trainer = (185, 100)
+# distance = 500
+# S = solution(dimensions, me, trainer, distance) # 9
+# pprint(S)
+
+# dimensions = (1250, 1250)
+# me = (150, 150)
+# trainer = (185, 100)
+# distance = 10000
+# S = solution(dimensions, me, trainer, distance) # 9
+# pprint(S)
