@@ -1,74 +1,26 @@
-# Key insight: unfold the room into the plane such that all trajectories become
-# straight lines between rooms that are symmetrical with respect to the common
-# boundary. Now the max distance of the laser beam corresponds to a circle extending
-# from your position. In this circle you have x copies of bogeys and x copies of you.
-# Count how many bogeys there are with a clear line of sight and you're done.
-
-# Implementation:
-#   we could use the Euclidean norm and do everything with regards to it
-# but then we have to worry about floats and square roots and that's annoying and slow.
-# So define a metric M((x, y)) = x^2 + y^2. Because both squaring and rooting are
-# monotonically increasing on R+ we know that if |v| < d then M(v) < d^2, so it's fine
-# to use this metric to judge whether or not we can land a shot.
-# Now we need a way to find out if vectors are proportional without dividing by the Euclidean norm. So: divide the coordinates by their GCD. This will let you know in constant time if 2 vectors are proportional without departing from integers.
-
-# Putting it all together: use a priority queue keyed by the fake metric and for a given bogey enqueue all 8 of its reflections minus the ones you've seen before and the ones that are too far away. BFS property + heap invariant will ensure that:
-#   the enumeration doesn't miss anyone so you can be sure you have visited all the relevant angles, and
-#   if a given angle would hit multiple bogeys, you always see the closest one first
-
-# You need a priority queue i.e. heap which will contain tuples like so:
-#   (M((x,y)), (x, y), isBogey) where isBogey is an int and either 0 or 1.
-#   (may need to specify what to do if two vectors have same norm but it might be fine)
-# The Seen set of already visited angles would contain untagged normalized angle vectors
-# I can either increment a counter depending on whether bogey or not or split Seen
-# into SeenBogey and SeenMyself then return len(SeenBogey), I'm not sure which option is the best re: simplicity, clarity, concision, performance, etc.
-
-# Will also need: a helper function to push an iterable onto a heap
-# a function to compute all 8 reflections of a bogey through the 4 walls + 4 corners
-
-# Write a function solution(dimensions, your_position, trainer_position, distance) that gives an array of 2 integers of the width and height of the room, an array of 2 integers of your x and y coordinates in the room, an array of 2 integers of the trainer's x and y coordinates in the room, and returns an integer of the number of distinct directions that you can fire to hit the elite trainer, given the maximum distance that the beam can travel.
-
-# The room has integer dimensions [1 < x_dim <= 1250, 1 < y_dim <= 1250]. You and the elite trainer are both positioned on the integer lattice at different distinct positions (x, y) inside the room such that [0 < x < x_dim, 0 < y < y_dim]. Finally, the maximum distance that the beam can travel before becoming harmless will be given as an integer 1 < distance <= 10000
-
-
-
-
+from itertools import product
+from pprint import pprint
 def gcd(a, b):
     while b:
         a, b = b, a % b
     return a
 def sign(x):
     return 1 if x > 0 else -1
-
-N, S, E, W = (0, -1), (0, 1), (1, 0), (-1, 0)
-NE, NW, SE, SW = (1, -1), (-1, -1), (1, 1), (-1, 1)
-reflections = {(0, 0): (N, S, E, W, NE, NW, SE, SW),
-        N:  (N, NE, NW),
-        S:  (S, SE, SW),
-        E:  (E, NE, SE),
-        W:  (W, NW, SW),
-        NE: (N, E, NE, NW, SE),
-        NW: (N, W, NE, NW, SW),
-        SE: (S, E, NE, SE, SW),
-        SW: (S, W, NW, SE, SW),
-        }
-
-from collections import namedtuple
-from heapq import heapify, heappop, heappush
-from pprint import pprint
-
-
 def solution(dimensions, shooter, target, distance):
-    width, height = dimensions
+    width, height = dimensions[0], dimensions[1]
+    boundx, boundy = 1 + distance // width, 1 + distance // height
+    rangex, rangey = range(-boundx, boundx + 1), range(-boundy, boundy + 1)
+    shooterx, shootery = shooter
+    xalpha, yalpha = shooterx - target[0], shootery - target[1]
+    Bx = [x for k in rangex for x in (2 * width * k + 1, 2 * width * k + 3)]
+    By = [2 * k for k in rangey]
+    Fx = [x for k in rangex for x in (2 * width * k - 2, 2 * width * k)]
+    Fy = [2 * k for k in rangey]
 
-    distance *= distance
-    shooterx, shootery = shooter[0], shooter[1]
     def M(x, y):
-        x, y = x - shooterx, y - shootery
         return x**2 + y**2
 
     def norm(x, y):
-        x, y = x - shooterx, y - shootery
         if not x and not y:
             return (0, 0)
         xSign, ySign = sign(x), sign(y)
@@ -76,46 +28,19 @@ def solution(dimensions, shooter, target, distance):
         divisor = gcd(x, y)
         return (xSign * x // divisor, ySign * y // divisor)
 
+    A = dict()
+    distance *= distance
+    for f in product(Fx, Fy):
+        fnorm, fmetric = norm(*f), M(*f)
+        if fmetric <= distance and (fnorm not in A or A[fnorm][0] > fmetric):
+            A[fnorm] = (fmetric, False)
+    for b in product(Bx, By):
+        bnorm, bmetric = norm(*b), M(*b)
+        if bmetric <= distance and (bnorm not in A or A[bnorm][0] > bmetric):
+            A[bnorm] = (bmetric, True)
 
-    Bogey = namedtuple("Bogey", "metric isHostile direction angle x y xOffset yOffset")
-
-    def bogey(x, y, isHostile, direction=(0, 0)):
-        return Bogey(
-            M(x, y), isHostile, direction, norm(x, y), x, y, (x, width - x), (y, height - y) 
-        )
-
-    shooter = bogey(*shooter, isHostile=False)
-    target = bogey(*target, isHostile=True)
-    if target.metric > distance:
-        return 0
-
-    def reflect(b, horizontal=1, vertical=1):
-        nX = b.x + horizontal * 2 * b.xOffset[max(0, horizontal)]
-        nY = b.y + vertical * 2 * b.yOffset[max(0, vertical)]
-        nXOffset = (b.xOffset[1], b.xOffset[0]) if horizontal else b.xOffset
-        nYOffset = (b.yOffset[1], b.yOffset[0]) if vertical else b.yOffset
-        return Bogey(
-            M(nX, nY), b.isHostile, (horizontal, vertical), norm(nX, nY), nX, nY, nXOffset, nYOffset 
-            )
-
-    def neighbors(bogey):
-        return (reflect(bogey, *r) for r in reflections[bogey.direction])
-
-    Q = [target, shooter]
-    heapify(Q)
-    seenHostile = {target.angle}
-    seenFriendly = {shooter.angle}
-    # pprint(target)
-    while Q:
-        curr = heappop(Q)
-        # print("Reflections of %s, metric %d" % ((curr.x, curr.y),curr.metric))
-        for img in neighbors(curr):
-            if img.metric <= distance and img.angle not in seenHostile and img.angle not in seenFriendly:
-                # pprint(img)
-                heappush(Q, img)
-                (seenHostile if img.isHostile else seenFriendly).add(img.angle)
-    return len(seenHostile)
-
+    return list(k for k, (m, v) in A.items() if v)
+    # return len(list(k for k, (m, v) in A.items() if v))
 
 # dimensions = (3, 2)
 # me = (1, 1)
@@ -123,6 +48,17 @@ def solution(dimensions, shooter, target, distance):
 # distance = 4
 # S = solution(dimensions, me, trainer, distance) # 7
 # pprint(S)
+
+S = solution((3,2), (1,1), (2,1), 500) 
+pprint(len(S))
+import matplotlib.pylab as plt
+matrix = [[0 for _ in range(1000)] for _ in range(1000)]
+offset = 500
+matrix[offset][offset] = 2
+for x, y in S:
+    matrix[offset + y][offset + x] = 1
+plt.spy(matrix, marker=".", markersize=2)
+plt.show()
 
 # dimensions = (3, 2)
 # me = (1, 1)
@@ -138,13 +74,9 @@ def solution(dimensions, shooter, target, distance):
 # S = solution(dimensions, me, trainer, distance) # 19265, 0.61s
 # pprint(S)
 
-dimensions = (3, 2)
-me = (1, 1)
-trainer = (2, 1)
-distance = 500
-S = solution(dimensions, me, trainer, distance) # 99465, 3.12s
-assert(S) == 99465
-pprint(S)
+# S = solution((3,2), (1,1), (2,1), 500) # 99465, 3.12s
+# # assert(S) == 99465
+# pprint(S)
 
 # dimensions = (300, 275)
 # me = (150, 150)
