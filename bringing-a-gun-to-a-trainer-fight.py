@@ -1,15 +1,3 @@
-# all the coprime translations of alpha by (W * x, H * y), x, y in Z
-# with norm less than D
-# minus the ones with smaller period than D?
-# just gen everyone and compute with gcd
-# unless you were multiples with (W, 0), (0, H) or (W, H)
-# i.e. everyone where W | x or H | y
-# and only need to test half of them because???
-from pprint import pprint
-
-# |T| = sqrt(ax**2 + W**2 x**2 + ay**2 +  H**2 y**2)
-# ax^2 + W^2 x^2 + ay^2 + H^2 y^2 < D^2
-# W^2 x^2 + H^2 y^2 < D^2 - ax^2 - ay^2
 from itertools import product
 
 
@@ -20,22 +8,19 @@ def gcd(a, b):
 
 
 def sign(x):
-    return 1 if x > 0 else -1
+    return 1 if x >= 0 else -1
 
 
-from math import atan2, hypot
 def solution(dimensions, shooter, target, distance):
     W, H = dimensions
     shooterx, shootery = shooter
-    boundx, boundy = 50, 50
+    boundx, boundy = 2 + distance // W, 2 + distance // H
 
-    def M(x, y):
-        # return hypot(x - shooterx, y - shootery)
-        return (x - shooterx) ** 2 + (y - shootery) ** 2
     distance *= distance
+    def M(x, y):
+        return (x - shooterx) ** 2 + (y - shootery) ** 2
 
     def norm(x, y):
-        # return atan2(x - shooterx, y - shootery)
         x, y = x - shooterx, y - shootery
         if (x, y) == (0, 0):
             return (0, 0)
@@ -57,10 +42,10 @@ def solution(dimensions, shooter, target, distance):
     bogeys = S(*target)
 
     A = dict()
-    def translate((Tx, Ty), (x, y)):
-        return (2 * W * Tx + x, 2 * Ty * H + y)
     def shoot(T, bogeys, isHostile):
-        for b in (translate(T, b) for b in bogeys):
+        Tx, Ty = T
+        xoffset, yoffset = 2 * W * Tx, 2 * H * Ty
+        for b in ((x + xoffset, y + yoffset) for x, y in bogeys):
             bnorm, bmetric = norm(*b), M(*b)
             if bmetric <= distance and (bnorm not in A or A[bnorm][0] > bmetric):
                 A[bnorm] = (bmetric, isHostile)
@@ -68,16 +53,16 @@ def solution(dimensions, shooter, target, distance):
     for T in product(range(-boundx, boundx + 1), range(-boundy, boundy + 1)):
         shoot(T, friendlies, False)
         shoot(T, bogeys, True)
-    pprint(A)
-    return [k for k, v in A.items() if v[1]]
+    return len([k for k, v in A.items() if v[1]])
 
 
 # So = solution((3,2), (1,1), (2,1), 4) # 7
-# So = solution((3,2), (2,1), (1,1), 100) # 3995
+So = solution((3,2), (2,1), (1,1), 100) # 3995
 # So = solution((3,2), (2,1), (1,1), 500) # 99465
-So = solution((300, 275), (150, 150), (185, 150), 500) # 9
-# pprint(So)
-print(len(So))
+# So = solution((300, 275), (150, 150), (180, 100), 500) # 9
+# So = solution((300, 275), (150, 150), (180, 100), 0) # 0
+# So = solution((1250, 1250), (1000, 1000), (500, 400), 10000) # 196
+print(So)
 # import matplotlib.pylab as plt
 
 # matrix = [[0 for _ in range(300)] for _ in range(300)]
