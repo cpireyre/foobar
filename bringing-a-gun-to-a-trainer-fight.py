@@ -41,16 +41,17 @@ def solution(dimensions, shooter, target, distance):
             (x + 2 * xoffset, y + 2 * yoffset))
 
     A, friendlies, bogeys = dict(), images(*shooter), images(*target)
+    W, H = 2 * W, 2 * H # the unfolded torus is twice the size of the original room
 
     # I don't totally like how this function mutates in place an out-of-scope object
     def shoot(T, bogeys, isHostile):
         """Adds the new angles to the dict A assuming they are smaller than any
         previously seen for a given trajectory."""
-        xoffset, yoffset = 2 * W * T[0], 2 * H * T[1]
+        xoffset, yoffset = W * T[0], H * T[1]
         for b in ((x + xoffset, y + yoffset) for x, y in bogeys):
-            angle, bmetric = norm(*b), M(*b)
-            if bmetric <= distance and (angle not in A or A[angle][0] > bmetric):
-                A[angle] = (bmetric, isHostile)
+            angle, metric = norm(*b), M(*b)
+            if metric <= distance and (angle not in A or A[angle][0] > metric):
+                A[angle] = (metric, isHostile)
 
     for T in product(range(-boundx, boundx), range(-boundy, boundy)):
         shoot(T, friendlies, False)
@@ -66,3 +67,4 @@ def solution(dimensions, shooter, target, distance):
 # So = solution((300, 275), (150, 150), (180, 100), 0) # 0, 0.06s
 # So = solution((1250, 1250), (1000, 1000), (500, 400), 10000) # 196, 0.06s
 # print(So)
+# 0.69s to run all of the above
