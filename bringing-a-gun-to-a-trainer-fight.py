@@ -7,31 +7,19 @@
 # No floats, no sqrt, no atan2, all integers.
 from itertools import product
 def solution(dimensions, shooter, target, distance):
-    W, H = dimensions
-    boundx, boundy = 2 + distance // (2 * W), 2 + distance // (2 * H)
-    shooterx, shootery = shooter
+    W, H  = dimensions
+    torusW, torusH = 2 * W, 2 * H
+    boundx, boundy = 2 + distance // torusW, 2 + distance // torusH
+    X, Y = xrange(-boundx, boundx), xrange(-boundy, boundy)
+    distance *= distance # sqrt(x^2 + y^2) < D <=> x^2 + y^2 < D^2, so don't need floats
 
-    def M(x, y):
-        """Returns a measure of the distance between (x, y) and the shooter."""
-        return (x - shooterx) ** 2 + (y - shootery) ** 2
-    distance *= distance # Only using squared distances from now on
-
-    def gcd(a, b): # Not in the math module in Python 2.7 for some reason
-        while b:
-            a, b = b, a % b
-        return a
-
-    sign = lambda x: 1 if x >= 0 else -1
-    def norm(x, y):
-        """Normalizes a vector to coprime components, with respect
-        to the shooter, preserves orientation."""
-        if (x, y) == (shooterx, shootery):
-            return (0, 0)
-        x, y = x - shooterx, y - shootery
-        signx, signy = sign(x), sign(y)
-        x, y = abs(x), abs(y)
-        g = gcd(x, y)
-        return (signx * (x // g), signy * (y // g))
+    recenter = lambda (x, y): (x - shooter[0], y - shooter[1])
+    squaredEuclidean = lambda (x, y): x**2 + y**2
+    M = lambda v: squaredEuclidean(recenter(v))
+    gcd = lambda a, b: gcd(b, a % b) if b else abs(a) # no math.gcd() in Python 2.7
+    scalarDivision = lambda (a, b), k: (a // k, b // k) # k is never 0 in context
+    norm = lambda v: scalarDivision(v, gcd(*v))
+    normalize = lambda v: (norm(recenter(v)) if v != shooter else (0, 0), M(v))
 
     def images(x, y):
         """Returns the 4 reflections of (x, y) in the unfolded torus
@@ -40,21 +28,19 @@ def solution(dimensions, shooter, target, distance):
         return ((x, y), (x + 2 * xoffset, y), (x, y + 2 * yoffset),
             (x + 2 * xoffset, y + 2 * yoffset))
 
-    A, friendlies, bogeys = dict(), images(*shooter), images(*target)
-    W, H = 2 * W, 2 * H # the unfolded torus is twice the size of the original room
+    def translateImages(T, imgs):
+        xoffset, yoffset = torusW * T[0], torusH * T[1]
+        return ((x + xoffset, y + yoffset) for x, y in imgs)
 
-    # I don't totally like how this function mutates in place an out-of-scope object
-    # could refactor it into a list comprehension then reduce through on A, or something
+    A, friendlies, bogeys = dict(), images(*shooter), images(*target)
     def shoot(T, bogeys, isHostile):
         """Adds the new angles to the dict A assuming they are smaller than any
         previously seen for a given trajectory."""
-        xoffset, yoffset = W * T[0], H * T[1]
-        for b in ((x + xoffset, y + yoffset) for x, y in bogeys):
-            angle, metric = norm(*b), M(*b)
+        for angle, metric in map(normalize, translateImages(T, bogeys)):
             if metric <= distance and (angle not in A or A[angle][0] > metric):
                 A[angle] = (metric, isHostile)
 
-    for T in product(range(-boundx, boundx), range(-boundy, boundy)):
+    for T in product(X, Y):
         shoot(T, friendlies, False)
         shoot(T, bogeys, True)
 
