@@ -17,19 +17,21 @@ def solution(dimensions, shooter, target, distance):
     images = lambda (x, y): ((x, y), (W - x, y), (x, H - y), (W - x, H - y))
     friendlies, targets = images(shooter), images(target)
 
-    # Everything we want to compute in this problem depends on the shooter's position:
-    normalize = lambda v:norm((v[0]-shooter[0],v[1]-shooter[1])) if v!=shooter else (0,0)
-    M = lambda (x, y): squaredEuclidean(x - shooter[0], y - shooter[1])
-
     # Tiling the plane with the Veech surface and enumerating the resulting bogeys:
     boundX, boundY = 2 + distance // W, 2 + distance // H
     bogeys = ((translation(dotProduct(T, (W, H)), bogey), bogey in targets)
             for bogey in friendlies + targets
             for T in product(xrange(-boundX, boundX), xrange(-boundY, boundY)))
 
+    # Everything we want to compute in this problem depends on the shooter's position:
+    normalize = lambda v:norm((v[0]-shooter[0],v[1]-shooter[1])) if v!=shooter else (0,0)
+    M = lambda (x, y): squaredEuclidean(x - shooter[0], y - shooter[1])
+
     seen = {}
     limit = distance**2 # sqrt(x^2 + y^2) < D <=> x^2 + y^2 < D^2
     trajectories = ((normalize(v), M(v), isHostile) for v, isHostile in bogeys)
+
+    # We are now ready to check every angle and keep only the bullseyes:
     for angle, metric, isHostile in trajectories:
         if metric <= limit and (angle not in seen or seen[angle][0] > metric):
             seen[angle] = (metric, isHostile)
@@ -37,7 +39,7 @@ def solution(dimensions, shooter, target, distance):
     return len([angle for angle, (_, isHostile) in seen.items() if isHostile])
 
 # Probably like half the execution time of this program is spent raveling and
-# unraveling call stacks for a dozen lambdas, all of which could very easily be
+# unraveling call stacks for a dozen lambdas, all of which could very easily
 # be inlined by the interpreter, but aren't. Such is the pythonic way of life.
 
 # I = ((3,2), (1,1), (2,1), 4) # 7, 0.06s
