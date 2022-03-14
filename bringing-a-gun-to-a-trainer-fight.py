@@ -1,62 +1,51 @@
-# The basic idea is we unfold the billiard into a torus then tile
-# the plane (up to a somewhat arbitrary boundary) with that torus
-# and compute all the bogeys, then filter with respect to distance
-# from origin and unicity of angle (which we check with the gcd
-# of the x and y components).
+# We're not going to use floats, sqrt, or atan2; it can all be done with integers.
+# However we will need some elementary vector algebra:
+gcd = lambda a, b: gcd(b, a % b) if b else abs(a) # no math.gcd() in Python 2.7
+norm = lambda (x, y): scalarDivision((x, y), gcd(x, y))
+dotProduct = lambda (a, b), (c, d): (a * c, b * d) # not using numpy's, I guess
+translation = lambda (a, b), (c, d): (a + c, b + d)
+scalarDivision = lambda (a, b), k: (a // k, b // k) # k is never 0 in context
+squaredEuclidean = lambda (x, y): x**2 + y**2
 
-# No floats, no sqrt, no atan2, all integers.
 from itertools import product
 def solution(dimensions, shooter, target, distance):
-    W, H  = dimensions
-    torusW, torusH = 2 * W, 2 * H
-    boundx, boundy = 2 + distance // torusW, 2 + distance // torusH
-    X, Y = xrange(-boundx, boundx), xrange(-boundy, boundy)
-    distance *= distance # sqrt(x^2 + y^2) < D <=> x^2 + y^2 < D^2, so don't need floats
 
+    # We unfold the billiard into its corresponding Veech surface.
+    # This billiard is a rectangle, so its Veech surface is of genus 1,
+    # which means it is made up of 4 mirror images:
+    W, H = (2 * dimensions[0], 2 * dimensions[1])
+    images = lambda (x, y): ((x, y), (W - x, y), (x, H - y), (W - x, H - y))
+    friendlies, targets = images(shooter), images(target)
+
+    # Everything we want to compute in this problem depends on the shooter's position:
     recenter = lambda (x, y): (x - shooter[0], y - shooter[1])
-    squaredEuclidean = lambda (x, y): x**2 + y**2
+    normalize = lambda v: norm(recenter(v)) if v != shooter else (0, 0)
     M = lambda v: squaredEuclidean(recenter(v))
-    gcd = lambda a, b: gcd(b, a % b) if b else abs(a) # no math.gcd() in Python 2.7
-    scalarDivision = lambda (a, b), k: (a // k, b // k) # k is never 0 in context
-    norm = lambda v: scalarDivision(v, gcd(*v))
-    normalize = lambda v: (norm(recenter(v)) if v != shooter else (0, 0), M(v))
 
-    def images(x, y):
-        """Returns the 4 reflections of (x, y) in the unfolded torus
-        corresponding to the rational billiard on the rectangle (W, H)."""
-        xoffset, yoffset = W - x, H - y
-        return ((x, y), (x + 2 * xoffset, y), (x, y + 2 * yoffset),
-            (x + 2 * xoffset, y + 2 * yoffset))
+    # Tiling the plane with the Veech surface and enumerating the resulting bogeys:
+    boundX, boundY = 2 + distance // W, 2 + distance // H
+    bogeys = ((translation(dotProduct(T, (W, H)), bogey), bogey in targets)
+            for bogey in friendlies + targets
+            for T in product(xrange(-boundX, boundX), xrange(-boundY, boundY)))
 
-    def translateImages(T, imgs):
-        xoffset, yoffset = torusW * T[0], torusH * T[1]
-        return ((x + xoffset, y + yoffset) for x, y in imgs)
+    seen = {}
+    limit = distance**2 # sqrt(x^2 + y^2) <= D <=> x^2 + y^2 <= D^2
+    trajectories = ((normalize(v), M(v), isHostile) for v, isHostile in bogeys)
+    for angle, metric, isHostile in trajectories:
+        if metric <= limit and (angle not in seen or seen[angle][0] > metric):
+            seen[angle] = (metric, isHostile)
 
-    A, friendlies, bogeys = dict(), images(*shooter), images(*target)
-    def shoot(T, bogeys, isHostile):
-        """Adds the new angles to the dict A assuming they are smaller than any
-        previously seen for a given trajectory."""
-        for angle, metric in map(normalize, translateImages(T, bogeys)):
-            if metric <= distance and (angle not in A or A[angle][0] > metric):
-                A[angle] = (metric, isHostile)
+    return len([angle for angle, (_, isHostile) in seen.items() if isHostile])
 
-    for T in product(X, Y):
-        shoot(T, friendlies, False)
-        shoot(T, bogeys, True)
+# Probably like half of the execution time of this program is spent raveling and
+# unraveling call stacks for a dozen lambdas, all of which could very easily be
+# inlined by the interpreter, but aren't. Such is the pythonic way of life.
 
-    return len([angle for angle, (_, hostile) in A.items() if hostile])
-
-
-So = solution((3,2), (1,1), (2,1), 4) # 7, 0.06s
-print(So)
-So = solution((3,2), (2,1), (1,1), 100) # 3995, 0.08s
-print(So)
-So = solution((3,2), (2,1), (1,1), 500) # 99463, 0.67s
-print(So)
-So = solution((300, 275), (150, 150), (180, 100), 500) # 9, 0.06s
-print(So)
-So = solution((300, 275), (150, 150), (180, 100), 0) # 0, 0.06s
-print(So)
-So = solution((1250, 1250), (1000, 1000), (500, 400), 10000) # 196, 0.06s
-print(So)
-# 0.69s to run all of the above
+# I = ((3,2), (1,1), (2,1), 4) # 7, 0.06s
+# I = ((3,2), (2,1), (1,1), 100) # 3995, 0.09s
+# I = ((3,2), (2,1), (1,1), 500) # 99463, 0.92s
+# I = ((300, 275), (150, 150), (180, 100), 500) # 9, 0.06s
+# I = ((300, 275), (150, 150), (180, 100), 0) # 0, 0.06s
+# I = ((1250, 1250), (1000, 1000), (500, 400), 10000) # 196, 0.06s
+# S = solution(*I)
+# print(S)
