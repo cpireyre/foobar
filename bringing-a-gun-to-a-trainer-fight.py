@@ -29,7 +29,7 @@ def solution(dimensions, shooter, target, distance):
             for T in product(xrange(-boundX, boundX), xrange(-boundY, boundY)))
 
     seen = {}
-    limit = distance**2 # sqrt(x^2 + y^2) < D if and only if x^2 + y^2 < D^2
+    limit = distance**2 # sqrt(x^2 + y^2) < D <=> if x^2 + y^2 < D^2
     trajectories = ((normalize(v), M(v), isHostile) for v, isHostile in bogeys)
     for angle, metric, isHostile in trajectories:
         if metric <= limit and (angle not in seen or seen[angle][0] > metric):
@@ -37,15 +37,15 @@ def solution(dimensions, shooter, target, distance):
 
     return len([angle for angle, (_, isHostile) in seen.items() if isHostile])
 
-# Probably like half of the execution time of this program is spent raveling and
+# Probably like half the execution time of this program is spent raveling and
 # unraveling call stacks for a dozen lambdas, all of which could very easily be
 # be inlined by the interpreter, but aren't. Such is the pythonic way of life.
 
 # I = ((3,2), (1,1), (2,1), 4) # 7, 0.06s
 # I = ((3,2), (2,1), (1,1), 100) # 3995, 0.09s
-# I = ((3,2), (2,1), (1,1), 500) # 99463, 0.92s
+I = ((3,2), (2,1), (1,1), 500) # 99463, 0.92s
 # I = ((300, 275), (150, 150), (180, 100), 500) # 9, 0.06s
 # I = ((300, 275), (150, 150), (180, 100), 0) # 0, 0.06s
 # I = ((1250, 1250), (1000, 1000), (500, 400), 10000) # 196, 0.06s
-# S = solution(*I)
-# print(S)
+S = solution(*I)
+print(S)
