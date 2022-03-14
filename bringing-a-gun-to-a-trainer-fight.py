@@ -25,12 +25,11 @@ def solution(dimensions, shooter, target, distance):
 
     # Everything we want to compute in this problem depends on the shooter's position:
     M = lambda (x, y): squaredEuclidean(x - shooter[0], y - shooter[1])
-    limit = distance**2 # sqrt(x^2 + y^2) < D <=> x^2 + y^2 < D^2
     bearing = lambda v: norm((v[0] - shooter[0], v[1] - shooter[1])) if v!=shooter else (0,0)
     trajectories = ((bearing(v), M(v), isHostile) for v, isHostile in bogeys)
 
     # We are now ready to check every angle and keep only the bullseyes:
-    seen = {}
+    seen, limit = {}, distance**2 # sqrt(x^2 + y^2) < D <=> x^2 + y^2 < D^2
     for angle, metric, isHostile in trajectories:
         if metric <= limit and (angle not in seen or seen[angle][0] > metric):
             seen[angle] = (metric, isHostile)
