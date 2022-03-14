@@ -5,7 +5,7 @@ norm = lambda (x, y): scalarDivision((x, y), gcd(x, y))
 dotProduct = lambda (a, b), (c, d): (a * c, b * d) # not using numpy's, I guess
 translation = lambda (a, b), (c, d): (a + c, b + d)
 scalarDivision = lambda (a, b), k: (a // k, b // k) # k is never 0 in context
-squaredEuclidean = lambda (x, y): x**2 + y**2
+squaredEuclidean = lambda x, y: x**2 + y**2
 
 from itertools import product
 def solution(dimensions, shooter, target, distance):
@@ -18,9 +18,8 @@ def solution(dimensions, shooter, target, distance):
     friendlies, targets = images(shooter), images(target)
 
     # Everything we want to compute in this problem depends on the shooter's position:
-    recenter = lambda (x, y): (x - shooter[0], y - shooter[1])
-    normalize = lambda v: norm(recenter(v)) if v != shooter else (0, 0)
-    M = lambda v: squaredEuclidean(recenter(v))
+    normalize = lambda v:norm((v[0]-shooter[0],v[1]-shooter[1])) if v!=shooter else (0,0)
+    M = lambda (x, y): squaredEuclidean(x - shooter[0], y - shooter[1])
 
     # Tiling the plane with the Veech surface and enumerating the resulting bogeys:
     boundX, boundY = 2 + distance // W, 2 + distance // H
@@ -29,7 +28,7 @@ def solution(dimensions, shooter, target, distance):
             for T in product(xrange(-boundX, boundX), xrange(-boundY, boundY)))
 
     seen = {}
-    limit = distance**2 # sqrt(x^2 + y^2) < D <=> if x^2 + y^2 < D^2
+    limit = distance**2 # sqrt(x^2 + y^2) < D <=> x^2 + y^2 < D^2
     trajectories = ((normalize(v), M(v), isHostile) for v, isHostile in bogeys)
     for angle, metric, isHostile in trajectories:
         if metric <= limit and (angle not in seen or seen[angle][0] > metric):
@@ -43,7 +42,7 @@ def solution(dimensions, shooter, target, distance):
 
 # I = ((3,2), (1,1), (2,1), 4) # 7, 0.06s
 # I = ((3,2), (2,1), (1,1), 100) # 3995, 0.09s
-I = ((3,2), (2,1), (1,1), 500) # 99463, 0.92s
+I = ((3,2), (2,1), (1,1), 500) # 99463, 0.88s
 # I = ((300, 275), (150, 150), (180, 100), 500) # 9, 0.06s
 # I = ((300, 275), (150, 150), (180, 100), 0) # 0, 0.06s
 # I = ((1250, 1250), (1000, 1000), (500, 400), 10000) # 196, 0.06s
