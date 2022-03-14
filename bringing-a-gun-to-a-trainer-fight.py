@@ -44,6 +44,7 @@ def solution(dimensions, shooter, target, distance):
     W, H = 2 * W, 2 * H # the unfolded torus is twice the size of the original room
 
     # I don't totally like how this function mutates in place an out-of-scope object
+    # could refactor it into a list comprehension then reduce through on A, or something
     def shoot(T, bogeys, isHostile):
         """Adds the new angles to the dict A assuming they are smaller than any
         previously seen for a given trajectory."""
@@ -57,14 +58,19 @@ def solution(dimensions, shooter, target, distance):
         shoot(T, friendlies, False)
         shoot(T, bogeys, True)
 
-    return len([k for k, v in A.items() if v[1]])
+    return len([angle for angle, (_, hostile) in A.items() if hostile])
 
 
-# So = solution((3,2), (1,1), (2,1), 4) # 7, 0.06s
-# So = solution((3,2), (2,1), (1,1), 100) # 3995, 0.08s
-# So = solution((3,2), (2,1), (1,1), 500) # 99463, 0.67s
-# So = solution((300, 275), (150, 150), (180, 100), 500) # 9, 0.06s
-# So = solution((300, 275), (150, 150), (180, 100), 0) # 0, 0.06s
-# So = solution((1250, 1250), (1000, 1000), (500, 400), 10000) # 196, 0.06s
-# print(So)
+So = solution((3,2), (1,1), (2,1), 4) # 7, 0.06s
+print(So)
+So = solution((3,2), (2,1), (1,1), 100) # 3995, 0.08s
+print(So)
+So = solution((3,2), (2,1), (1,1), 500) # 99463, 0.67s
+print(So)
+So = solution((300, 275), (150, 150), (180, 100), 500) # 9, 0.06s
+print(So)
+So = solution((300, 275), (150, 150), (180, 100), 0) # 0, 0.06s
+print(So)
+So = solution((1250, 1250), (1000, 1000), (500, 400), 10000) # 196, 0.06s
+print(So)
 # 0.69s to run all of the above
