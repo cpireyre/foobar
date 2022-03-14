@@ -35,7 +35,7 @@ def solution(dimensions, shooter, target, distance):
         if metric <= limit and (angle not in seen or seen[angle][0] > metric):
             seen[angle] = (metric, isHostile)
 
-    return len([angle for angle, (_, isHostile) in seen.items() if isHostile])
+    return sum(isHostile for _, isHostile in seen.values())
 
 # Probably like half the execution time of this program is spent raveling and
 # unraveling call stacks for a dozen lambdas, all of which could very easily
@@ -43,7 +43,7 @@ def solution(dimensions, shooter, target, distance):
 
 # I = ((3,2), (1,1), (2,1), 4) # 7, 0.06s
 # I = ((3,2), (2,1), (1,1), 100) # 3995, 0.09s
-I = ((3,2), (2,1), (1,1), 500) # 99463, 0.88s
+I = ((3,2), (2,1), (1,1), 500) # 99463, 0.84s
 # I = ((300, 275), (150, 150), (180, 100), 500) # 9, 0.06s
 # I = ((300, 275), (150, 150), (180, 100), 0) # 0, 0.06s
 # I = ((1250, 1250), (1000, 1000), (500, 400), 10000) # 196, 0.06s
