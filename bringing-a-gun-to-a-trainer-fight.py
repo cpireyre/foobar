@@ -18,12 +18,13 @@ def solution(dimensions, shooter, target, distance):
 
     friendlies, targets = images(*shooter), images(*target)
 
-    # Tiling the plane with translations of the bogey images from the Veech surface:
-    boundX, boundY = 2 + distance // W, 2 + distance // H
+    # Tiling the plane with translations of the images from the Veech surface:
+    wall, ceiling = 2 + distance // W, 2 + distance // H
     bogeys = (
         ((x + W * Tx, y + H * Ty), (x, y) in targets)
-        for x, y in friendlies + targets
-        for Tx, Ty in product(xrange(-boundX, boundX), xrange(-boundY, boundY))
+        for (x, y), Tx, Ty in product(
+            friendlies + targets, xrange(-wall, wall), xrange(-ceiling, ceiling)
+        )
     )
 
     # Computing distance and bearing of all bogeys relative to the original shooter:
@@ -39,16 +40,16 @@ def solution(dimensions, shooter, target, distance):
 
     limit = distance**2  # sqrt(x^2 + y^2) < D <=> M(x, y) < D^2
     trajectories = (
-        (bearing(*v), (M(*v), isHostile)) for v, isHostile in bogeys if M(*v) <= limit
+        (bearing(*v), (M(*v), isTarget)) for v, isTarget in bogeys if M(*v) <= limit
     )
 
-    # Finally, we collapse collinear trajectories to single shots and keep the shortest:
+    # Finally, we merge collinear trajectories to single shots, keeping the shortest:
     shots = {}
     for angle, measure in trajectories:
         if angle not in shots or measure < shots[angle]:
             shots[angle] = measure
 
-    return sum(isHostile for _, isHostile in shots.values())
+    return sum(isTarget for _, isTarget in shots.values())
 
 
 # I = ((3,2), (1,1), (2,1), 4) # 7, 0.06s
@@ -57,6 +58,6 @@ def solution(dimensions, shooter, target, distance):
 # I = ((300, 275), (150, 150), (180, 100), 0) # 0, 0.06s
 # I = ((1250, 1250), (1000, 1000), (500, 400), 10000) # 196, 0.06s
 # I = ((3,2), (2,1), (1,1), 500) # 99463, 0.59s
-I = ((3, 2), (2, 1), (1, 1), 1000)  # 397845, 2.40s
+I = ((3, 2), (2, 1), (1, 1), 1000)  # 397845, 2.43s
 S = solution(*I)
 print(S)
