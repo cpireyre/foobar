@@ -5,13 +5,13 @@ def gcd(a, b): # no math.gcd() in Python 2.7 for some reason
 
 from itertools import product
 def solution(dimensions, shooter, target, distance):
-
     # We unfold the billiard into its corresponding Veech surface.
     # This billiard is a rectangle, so its Veech surface is of genus 1,
     # which means it is made up of 4 mirror images:
     W, H = (2 * dimensions[0], 2 * dimensions[1])
     def images(x, y):
         return ((x, y), (W - x, y), (x, H - y), (W - x, H - y))
+
     friendlies, targets = images(*shooter), images(*target)
 
     # Repeatedly translating the bogeys embedded in the Veech surface to tile the plane:
@@ -27,8 +27,10 @@ def solution(dimensions, shooter, target, distance):
         x, y = x - shooter[0], y - shooter[1]
         g = gcd(x, y)
         return (x // g, y // g)
+
     def M(x, y):
         return (x - shooter[0])**2 + (y - shooter[1])**2
+
     trajectories = ((bearing(*v), M(*v), isHostile) for v, isHostile in bogeys)
 
     # We are now ready to check every angle and keep only the bullseyes:
