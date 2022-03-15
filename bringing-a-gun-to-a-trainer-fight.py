@@ -18,7 +18,7 @@ def solution(dimensions, shooter, target, distance):
 
     friendlies, targets = images(*shooter), images(*target)
 
-    # Tiling the plane with translations of the bogeys in the Veech surface:
+    # Tiling the plane with translations of the bogey images from the Veech surface:
     boundX, boundY = 2 + distance // W, 2 + distance // H
     bogeys = (
         ((x + W * Tx, y + H * Ty), (x, y) in targets)
