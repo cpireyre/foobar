@@ -28,16 +28,16 @@ def partialPermutations(xs):
 from pprint import pprint
 
 
-def solution(times, times_limit):
-    source, sink = 0, len(times) - 1
-    V, bunnies = xrange(len(times)), xrange(1, sink)
+def solution(G, times_limit):
+    source, sink = 0, len(G) - 1
+    V, bunnies = xrange(len(G)), xrange(1, sink)
     for k, i, j in product(V, V, V):
-        times[i][j] = min(times[i][j], times[i][k] + times[k][j])
-        if times[i][i] < 0:
+        G[i][j] = min(G[i][j], G[i][k] + G[k][j])
+        if G[i][i] < 0:
             return [bunny - 1 for bunny in bunnies]
 
     def pathCost(path):
-        return sum(times[u][v] for u, v in pairwise((source,) + path + (sink,)))
+        return sum(G[u][v] for u, v in pairwise((source,) + path + (sink,)))
 
     paths = {
         p: pathCost(p)
@@ -51,7 +51,7 @@ def solution(times, times_limit):
     pprint(candidates)
     pprint(paths)
     res = sorted(candidates)[0]
-    return [bunny - 1 for bunny in res]
+    return sorted([bunny - 1 for bunny in res])
 
 
 times, time = [
