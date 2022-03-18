@@ -12,33 +12,60 @@
 
 from itertools import product, permutations, chain, tee
 
-def pairwise(xs): # itertools.pairwise() was introduced in Python 3.10
+
+def pairwise(xs):  # itertools.pairwise() was introduced in Python 3.10
     """pairwise('ABCDEFG') --> AB BC CD DE EF FG"""
     a, b = tee(xs)
     next(b, None)
     return zip(a, b)
 
+
 def partialPermutations(xs):
     s = list(xs)
     return chain.from_iterable(permutations(s, r) for r in range(len(s) + 1))
 
+
 from pprint import pprint
+
+
 def solution(times, times_limit):
-    card = len(times)
-    V, bunnies = xrange(card), xrange(1, card - 1)
+    source, sink = 0, len(times) - 1
+    V, bunnies = xrange(len(times)), xrange(1, sink)
     for k, i, j in product(V, V, V):
         times[i][j] = min(times[i][j], times[i][k] + times[k][j])
         if times[i][i] < 0:
-            return list(bunny - 1 for bunny in bunnies)
+            return [bunny - 1 for bunny in bunnies]
+
     def pathCost(path):
-        return sum(times[u][v] for u, v in pairwise((0,) + path + (card - 1,)))
-    paths = {p:pathCost(p) for p in partialPermutations(bunnies) if pathCost(p) <= times_limit}
+        return sum(times[u][v] for u, v in pairwise((source,) + path + (sink,)))
+
+    paths = {
+        p: pathCost(p)
+        for p in partialPermutations(bunnies)
+        if pathCost(p) <= times_limit
+    }
     if not paths:
         return []
-    best = max(len(path) for path, cost in paths.items())
-    res = sorted([path for path in paths if len(path) == best])[0]
+    best = max(paths.keys(), key=len)
+    candidates = [path for path in paths if len(path) == len(best)]
+    pprint(candidates)
+    pprint(paths)
+    res = sorted(candidates)[0]
     return [bunny - 1 for bunny in res]
 
-times = [[0, 2, 2, 2, -1], [9, 0, 2, 2, -1], [9, 3, 0, 2, -1], [9, 3, 2, 0, -1], [9, 3, 2, 2, 0]]
-S = solution(times, 1)
+
+times, time = [
+    [0, 2, 2, 2, -1],
+    [9, 0, 2, 2, -1],
+    [9, 3, 0, 2, -1],
+    [9, 3, 2, 0, -1],
+    [9, 3, 2, 2, 0],
+], 1  # [1, 2]
+# times, time = [[-20, 2, 2, 2, -1], [9, 0, 2, 2, -1], [9, 3, 0, 2, -1], [9, 3, 2, 0, -1], [9, 3, 2, 2, 0]], -1000 # [0, 1, 2]
+# times, time = [[0, 1, 1, 1, 1], [1, 0, 1, 1, 1], [1, 1, 0, 1, 1], [1, 1, 1, 0, 1], [1, 1, 1, 1, 0]], 3 # [0, 1]
+# times, time = [[0, 2, 2, 2, -1], [9, 0, 2, 2, -1], [9, 3, 0, 2, -1], [9, 3, 2, 0, -1], [9, 3, 2, 2, 0]], 100 # [0, 1, 2], 0.05s
+# times, time = [[0, 1], [1, 0]], 10 # []
+# times, time = [[-10, 1], [1, 0]], 10 # []
+# times, time = [[2, 1], [1, 0]], -30 # []
+S = solution(times, time)
 pprint(S)
