@@ -15,7 +15,7 @@ def solution(G, limit):
     source, sink = 0, len(G) - 1
     V, bunnies = range(sink + 1), range(1, sink)
 
-    # Computing the min cost transitive closure of G with Floyd-Warshall:
+    # Computing the min cost transitive closure of G with Floyd–Warshall:
     for k, i, j in product(V, V, V):
         G[i][j] = min(G[i][j], G[i][k] + G[k][j])
         if G[i][i] < 0: # if G contains a negative cycle, we can save everyone
