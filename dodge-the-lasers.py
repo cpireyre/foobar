@@ -2,7 +2,7 @@
 # Let α = √2 and B(α, n) = ⌊α⌋, ⌊2⋅α⌋, ⌊3⋅α⌋, ... ⌊n⋅α⌋ its partial Beatty sequence.
 # Let N = ⌊n⋅α⌋.
 
-# α is irrational, therefore, by the Rayleigh-Beatty theorem, there exists
+# α is irrational, therefore, by the Rayleigh–Beatty theorem, there exists
 # β = 2 + √2 and m = N / β such that B(α, n) and B(β, m) form a partition
 # of the natural numbers from 1 to N.
 
