@@ -2,7 +2,7 @@ from decimal import Decimal as D
 from decimal import ROUND_DOWN, getcontext
 
 def solution(str_n):
-    getcontext().prec=200
+    getcontext().prec=300
     getcontext().rounding=ROUND_DOWN
     alpha = D(2).sqrt()
     beta = 2 + alpha
